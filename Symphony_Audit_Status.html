@@ -1,0 +1,423 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Symphony Audit Status</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">
+<style>
+/* Layout: forest masthead, then ONE row of main tabs (Products / Presales / Guide).
+   Each board = stage cards (the main filter) -> LOB bars -> product table.
+   Colour rule: green = ready, blue = in adoption, red = not completed. Gold is only for brand and buttons. */
+:root{
+  --forest:#12341D; --forest-2:#0C2415; --band-fg:#FFFFFF; --band-dim:#B9CBBF; --band-accent:#E7D08A;
+  --gold:#946924; --gold-hover:#7A5519; --gold-soft:#F8E9C4; --gold-line:#E7D08A; --on-gold:#FFFFFF;
+  --ink:#061E29; --ink-2:#384B54; --ink-3:#5F6E75;
+  --ground:#EEF0F1; --surface:#FFFFFF; --surface-2:#F7F8F9; --border:#E1E5E8; --border-strong:#C9D1D5; --hover:#F2F5F3;
+  --ready:#4A7F62; --ready-soft:#EDF4EF;
+  --adopt:#5A7FA6; --adopt-soft:#EDF2F7;
+  --open:#B0645B; --open-soft:#F8EEEC;
+  --neutral-soft:#EDF0F2;
+  --sh:0 1px 2px rgba(6,30,41,.06); --sh-lift:0 6px 18px rgba(6,30,41,.12);
+  --maxw:1120px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --forest:#15301F; --forest-2:#0E2416; --band-fg:#F2F6F3; --band-dim:#9FB6A8; --band-accent:#DCB56C;
+  --gold:#C79A4E; --gold-hover:#D9AE63; --gold-soft:#2A2317; --gold-line:#4A3B1E; --on-gold:#0F1813;
+  --ink:#E9EEEA; --ink-2:#B8C6BD; --ink-3:#8FA097;
+  --ground:#0A1310; --surface:#131C17; --surface-2:#0F1813; --border:#25332B; --border-strong:#33453A; --hover:#1A2620;
+  --ready:#7DB394; --ready-soft:#1A2B22;
+  --adopt:#8CAAD0; --adopt-soft:#1B2632;
+  --open:#D89A92; --open-soft:#2E2020;
+  --neutral-soft:#1B2520;
+  --sh:0 1px 2px rgba(0,0,0,.4); --sh-lift:0 6px 18px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --forest:#15301F; --forest-2:#0E2416; --band-fg:#F2F6F3; --band-dim:#9FB6A8; --band-accent:#DCB56C;
+  --gold:#C79A4E; --gold-hover:#D9AE63; --gold-soft:#2A2317; --gold-line:#4A3B1E; --on-gold:#0F1813;
+  --ink:#E9EEEA; --ink-2:#B8C6BD; --ink-3:#8FA097;
+  --ground:#0A1310; --surface:#131C17; --surface-2:#0F1813; --border:#25332B; --border-strong:#33453A; --hover:#1A2620;
+  --ready:#7DB394; --ready-soft:#1A2B22;
+  --adopt:#8CAAD0; --adopt-soft:#1B2632;
+  --open:#D89A92; --open-soft:#2E2020;
+  --neutral-soft:#1B2520;
+  --sh:0 1px 2px rgba(0,0,0,.4); --sh-lift:0 6px 18px rgba(0,0,0,.5); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:Lato,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0}
+button,select,input{font-family:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
+.small{font-size:12.5px;color:var(--ink-3)}
+.scroll{overflow-x:auto}
+
+/* masthead */
+.mast{background:var(--forest);color:var(--band-fg)}
+.mast-in{max-width:var(--maxw);margin:0 auto;padding:18px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px}
+.mast-title{flex:1 1 320px;min-width:0}
+.mark{font-weight:900;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--band-accent)}
+h1{font-size:26px;font-weight:900;line-height:1.15;letter-spacing:-.02em;margin-top:4px}
+.asof{margin-top:4px;color:var(--band-dim);font-size:13.5px}
+.mast-actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* buttons */
+.btn{font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;border:1px solid var(--gold);background:var(--gold);color:var(--on-gold);text-decoration:none;transition:background .15s,border-color .15s,box-shadow .15s,transform .05s}
+.btn:hover{background:var(--gold-hover);border-color:var(--gold-hover);box-shadow:var(--sh-lift)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--gold);border-color:var(--gold)}
+.btn.ghost:hover{background:var(--gold-soft);color:var(--gold-hover);border-color:var(--gold-hover);box-shadow:none}
+.mast .btn.ghost{color:var(--band-accent);border-color:var(--band-accent)}
+.mast .btn.ghost:hover{background:rgba(255,255,255,.1);color:#fff;border-color:#fff}
+
+/* main tabs */
+.maintabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--sh)}
+.maintabs-in{max-width:var(--maxw);margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto}
+.mtab{font:inherit;cursor:pointer;background:none;border:0;border-bottom:3px solid transparent;padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--ink-2);white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+.mtab:hover{background:var(--hover);color:var(--ink);border-bottom-color:var(--border-strong)}
+.mtab[aria-selected="true"]{background:none;color:var(--ink);border-bottom-color:var(--gold)}
+.mtab .ct{font-size:12.5px;font-weight:700;min-width:28px;text-align:center;padding:1px 8px;border-radius:99px;background:var(--neutral-soft);color:var(--ink)}
+.mtab[aria-selected="true"] .ct{background:var(--gold-soft);color:var(--gold)}
+
+/* shell */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:20px 16px 64px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:var(--sh);min-width:0}
+.card-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px;margin-bottom:14px}
+h2{font-size:17px;font-weight:900;letter-spacing:-.01em}
+
+/* stage cards: the main filter */
+.stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.headline{font-size:20px;font-weight:900;letter-spacing:-.01em;line-height:1.3;margin:0 0 14px;color:var(--ink)}
+.headline b{color:var(--gold)}
+.stage{--tone:var(--ink-2);--tone-soft:var(--neutral-soft);text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:8px;min-width:0;transition:box-shadow .15s,transform .1s,border-color .15s}
+.stage.ready{--tone:var(--ready);--tone-soft:var(--ready-soft)}
+.stage.adopt{--tone:var(--adopt);--tone-soft:var(--adopt-soft)}
+.stage.open{--tone:var(--open);--tone-soft:var(--open-soft)}
+.stage:hover{box-shadow:var(--sh-lift);transform:translateY(-2px);border-color:var(--tone)}
+.stage[aria-pressed="true"]{border-color:var(--tone);box-shadow:0 0 0 1px var(--tone),var(--sh-lift)}
+.stage .top{display:flex;align-items:center;gap:10px}
+.stage .ico{flex:none;width:30px;height:30px;border-radius:50%;background:var(--tone-soft);color:var(--tone);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900}
+.stage .lab{font-size:13px;font-weight:700;color:var(--ink);line-height:1.25}
+.stage .num{font-size:44px;font-weight:900;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.stage .num small{font-size:14px;font-weight:700;color:var(--tone);letter-spacing:0;margin-left:8px}
+.stage .cap{font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.stage .grp{display:block;margin-top:6px;padding-top:10px;border-top:1px solid var(--border)}
+.stage .gh{display:block;font-size:11.5px;font-weight:900;color:var(--ink-2);margin-bottom:6px}
+.stage .gh em{font-style:normal;color:var(--tone)}
+.stage .chips{display:flex;flex-wrap:wrap;gap:5px}
+.stage .chip{font-size:12.5px;padding:2px 9px;border-radius:99px;background:var(--tone-soft);color:var(--ink);line-height:1.5}
+.lobchips{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.lobchips .pc{font-size:12.5px;padding:2px 10px 2px 8px;border-radius:99px;background:var(--tone-soft);color:var(--ink);line-height:1.5;display:inline-flex;align-items:center;gap:6px}
+.lobchips .pc::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tone)}
+.pc.ready{--tone:var(--ready);--tone-soft:var(--ready-soft)}.pc.adopt{--tone:var(--adopt);--tone-soft:var(--adopt-soft)}.pc.open{--tone:var(--open);--tone-soft:var(--open-soft)}
+.stage .sel{font-size:11.5px;font-weight:700;color:var(--tone);min-height:16px}
+.meter{height:5px;border-radius:99px;background:var(--neutral-soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--tone);border-radius:99px;opacity:.85}
+
+/* LOB bars */
+.lobs{display:flex;flex-direction:column;gap:6px}
+.lobrow{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) 40px;align-items:center;gap:12px;padding:6px 8px;border-radius:8px;border:1px solid transparent;transition:background .12s,border-color .12s}
+.lobrow:hover{background:var(--surface-2);border-color:var(--border)}
+.lobrow.on,.lobrow.on:hover{background:var(--surface);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.lobname{font-weight:700;font-size:14px;color:var(--ink)}
+.lobl{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.eye{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:99px;font-size:12px;font-weight:700;color:var(--ink-3);border:1px solid var(--border-strong);background:var(--surface);transition:background .15s,color .15s,border-color .15s}
+.eye svg{width:15px;height:15px}
+.eye:hover{background:var(--gold-soft);color:var(--gold);border-color:var(--gold)}
+.eye:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.eye[aria-pressed="true"]{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.sf{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.sfb{font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700;transition:background .15s,border-color .15s}
+.sfb i{width:9px;height:9px;border-radius:50%;background:var(--tone,var(--ink-3))}
+.sfb b{font-size:12px;padding:0 7px;border-radius:99px;background:var(--neutral-soft)}
+.sfb.ready{--tone:var(--ready)}.sfb.adopt{--tone:var(--adopt)}.sfb.open{--tone:var(--open)}
+.sfb:hover{border-color:var(--tone,var(--gold));background:var(--surface-2)}
+.sfb:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.sfb[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold)}
+.seg:hover{filter:brightness(1.08)}
+.lobbar{display:flex;height:30px;gap:2px;border-radius:6px;overflow:hidden;background:var(--neutral-soft)}
+.seg{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff;min-width:0;font-variant-numeric:tabular-nums;transition:filter .12s}
+.seg.ready{background:var(--ready)} .seg.adopt{background:var(--adopt)} .seg.open{background:var(--open)}
+:root[data-theme="dark"] .seg{color:#0C1410}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg{color:#0C1410}}
+.seg:hover{filter:brightness(1.15)}
+.seg:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.lobtotal{text-align:right;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;color:var(--ink-2);font-size:13px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* toolbar */
+.bar{display:flex;flex-wrap:wrap;gap:12px 14px;align-items:flex-end;margin-bottom:12px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label{font-size:12px;font-weight:700;color:var(--ink-3)}
+.bar{align-items:flex-end}
+.ctl.grow{flex:1 1 220px;max-width:340px}.ctl.grow2{flex:2 1 260px}
+.ctl label{font-size:12.5px;color:var(--ink-2)}
+.field{position:relative;display:flex;align-items:center}
+.field>svg{position:absolute;left:12px;width:18px;height:18px;color:var(--ink-3);pointer-events:none}
+.field .chev{position:absolute;right:12px;display:flex;pointer-events:none;color:var(--ink-3)}
+.field .chev svg{width:16px;height:16px}
+select,input[type=search]{-webkit-appearance:none;appearance:none;width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;height:44px;padding:0 14px 0 40px;transition:border-color .15s,box-shadow .15s}
+select{padding-right:38px;cursor:pointer;font-weight:700}
+input[type=search]::placeholder{color:var(--ink-3)}
+select:hover,input[type=search]:hover{border-color:var(--gold)}
+select:focus,input[type=search]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.field:hover>svg,.field:focus-within>svg{color:var(--gold)}
+.chipline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:34px;margin-bottom:10px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:99px;background:var(--gold-soft);border:1px solid var(--gold-line);font-size:13px;font-weight:700;color:var(--ink)}
+.tag button{all:unset;cursor:pointer;width:20px;height:20px;border-radius:50%;text-align:center;line-height:20px;color:var(--ink-2)}
+.tag button:hover{background:var(--gold);color:var(--on-gold)}
+.tag button:focus-visible{outline:2px solid var(--gold)}
+
+/* table */
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+thead th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;white-space:nowrap;background:var(--surface-2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sortbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-transform:inherit;letter-spacing:inherit;padding:2px 4px;margin:-2px -4px;border-radius:4px}
+.sortbtn:hover{color:var(--ink);background:var(--hover)}
+.sortbtn:focus-visible{outline:2px solid var(--gold)}
+.sortbtn .ar{opacity:.35;font-size:10px}
+.sortbtn[data-dir] .ar{opacity:1;color:var(--gold)}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:var(--hover)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ready{background:var(--ready-soft);color:var(--ready)}
+.pill.adopt{background:var(--adopt-soft);color:var(--adopt)}
+.pill.open{background:var(--open-soft);color:var(--open)}
+.qa-bad{color:var(--open);font-weight:700}
+.flag{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:900;letter-spacing:.1em;padding:1px 6px;border-radius:3px;background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold-line)}
+.empty{padding:28px;text-align:center;color:var(--ink-3)}
+.count{font-size:13px;color:var(--ink-3);margin:2px 0 8px}
+
+/* guide */
+.guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.gcard{border:1px solid var(--border);border-top:5px solid var(--tone);border-radius:12px;padding:16px;background:var(--surface-2)}
+.gcard.ready{--tone:var(--ready)} .gcard.adopt{--tone:var(--adopt)} .gcard.open{--tone:var(--open)}
+.gcard h3{font-size:15px;font-weight:900;color:var(--tone)}
+.gcard p{margin-top:8px;font-size:14px;color:var(--ink-2)}
+.notes{margin:14px 0 0;padding-left:20px;color:var(--ink-2);font-size:14px}
+.notes li{margin-top:6px}
+
+.copyout{display:none;margin-top:12px;padding:12px;border:1px dashed var(--gold-line);border-radius:8px;background:var(--surface-2);font-size:13px;white-space:pre-wrap;user-select:all}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:#0B0F0D;color:#fff;padding:10px 16px;border-radius:6px;font-weight:700;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+
+@media (max-width:860px){
+  .lobchips{grid-column:1 / -1}
+  .stages{grid-template-columns:minmax(0,1fr)}
+  .guide{grid-template-columns:minmax(0,1fr)}
+  h1{font-size:22px}
+  .lobrow{grid-template-columns:minmax(0,1fr) 34px;gap:6px 10px}
+  .lobrow .lobbar{grid-column:1 / -1;order:3}
+  .card{padding:16px}
+}
+@media (max-width:480px){.stages{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head><body><header class="mast">
+  <div class="mast-in">
+    <div class="mast-title">
+      <p class="mark">eMACH.ai Symphony · 26.2</p>
+      <h1>Symphony One Experience Audit</h1>
+      <p class="asof">Status as of 30 Sep 2026</p>
+    </div>
+    <div class="mast-actions">
+      <button class="btn" id="copy" type="button">Copy summary</button>
+      <a class="btn ghost" href="https://docs.google.com/spreadsheets/d/143NeHodTIBdmB9QNqe8SPPdl24yeqXgI3ucGRsd1G2c/edit?gid=0#gid=0" target="_blank" rel="noopener">Open source sheet</a>
+    </div>
+  </div>
+</header>
+
+<nav class="maintabs" aria-label="Report sections">
+  <div class="maintabs-in" role="tablist" id="maintabs"></div>
+</nav>
+
+<main class="wrap">
+  <div class="copyout" id="copyout" tabindex="0"></div>
+  <div id="panel-products" role="tabpanel"></div>
+  <div id="panel-presales" role="tabpanel" hidden></div>
+  <div id="panel-guide" role="tabpanel" hidden>
+    <section class="card">
+      <div class="card-head"><h2>How to read this report</h2></div>
+      <div class="guide">
+        <div class="gcard ready"><h3>Ready for CTO sign-off</h3><p>First-level audit is clean. The LOB CTO can sign off adoption.</p></div>
+        <div class="gcard adopt"><h3>Audit done, adoption in progress</h3><p>The UI audit report is issued. Dev teams are closing the comments, or the product is in cross audit.</p></div>
+        <div class="gcard open"><h3>Not completed</h3><p>Install not shared, install shared but audit not started, or audit still in progress.</p></div>
+      </div>
+      <ul class="notes">
+        <li>Stages are grouped from the sheet's Current Status column.</li>
+        <li>QA is the quality certification for the release. "Requires regression" means the code came from a hotfix branch and needs another validation round after it reaches the main branch.</li>
+        <li>CHECK marks a sign-off-ready line that also shows regression required or 0% dev coverage in the sheet.</li>
+        <li>Presales environments follow their product audit. Green means the install is shared, blue means waiting for the product audit to close, red means nothing shared yet.</li>
+        <li>Wholesale Banking = Wholesale in the sheet; Consumer Banking = Consumer.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+var LOBN={Consumer:'Consumer Banking',Wholesale:'Wholesale Banking'};
+var lobName=function(l){return LOBN[l]||l};
+var $=function(id){return document.getElementById(id)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove('show')},1800)}
+
+/* ---------- data ---------- */
+// [product, LOB, sheet status, QA, dev coverage, ETA]
+var RAW=[["Payments","Wholesale","Pending Audit Review Comments Closure","Verified","100%",""],["CIM","Wholesale","Ready for LOB CTO Sign off","Verified","100%",""],["CBX BO","Wholesale","Ready for LOB CTO Sign off","Verified","100%",""],["CS (Common Services)","Wholesale","Pending Audit Review Comments Closure","Regression","",""],["VAM","Wholesale","Pending Audit Review Comments Closure","Regression","100%",""],["IDC - OFP","Consumer","Ready for LOB CTO Sign off","Verified","100%",""],["IDM (Collect)","Consumer","Ready for LOB CTO Sign off","Verified","100%",""],["LAX","Consumer","Pending Cross Audit Review Comments Closure","Verified","100%","18 Sep"],["LMS - Loan Management System","Consumer","Ready for LOB CTO Sign off","Regression","0%",""],["CLMS (with Limits)","Consumer","Ready for LOB CTO Sign off","Regression","0%",""],["Cards","Consumer","Ready for LOB CTO Sign off","Verified","100%",""],["Trade","Wholesale","Pending Audit Review Comments Closure","Verified","",""],["SCF","Wholesale","Pending Audit Review Comments Closure","","",""],["eMACH Sigma","CTOO","Ready for LOB CTO Sign off","Verified","100%",""],["ARX","CTOO","Pending Audit Review Comments Closure","Verified","100%",""],["iTurmeric","CTOO","Pending Audit Review Comments Closure","Verified","100%","18 Sep"],["Wealth","iAI","Pending Cross Audit Review Comments Closure","Verified","100%","15 Sep"],["Treasury Investment","Consumer","Pending Audit Review Comments Closure","Failed","",""],["Treasury Borrowing","Consumer","Pending Audit Review Comments Closure","","","30 Sep"],["Quantum Core","Consumer","Pending Audit Review Comments Closure","Verified","100%",""],["Treasury CALM","Consumer","Yet to Share the Install for Audit","Verified","100%",""],["Origination (LOS)","Consumer","Pending Audit Review Comments Closure","Regression","100%",""],["CnR (with CnR - VAM)","Wholesale","Pending Audit Review Comments Closure","Verified","90%",""],["DTB (Payments Enabler, CBX BO, UOB)","Wholesale","Pending Audit Review Comments Closure","Verified","100%",""],["iSA Cash Management","iSA","Yet to Share the Install for Audit","","",""],["K3 Delivery Suite","Consumer","Yet to Share the Install for Audit","","",""],["DEP Backoffice","Consumer","Yet to Share the Install for Audit","Not verified","",""],["Custody","iAI","UI Audit in Progress","","50%","25 Sep"],["Purple Fabric","iPF","UI Audit in Progress","Verified","100%",""],["CPX","iDTC","Pending Audit Review Comments Closure","Verified","100%","30 Nov"],["GPX","iDTC","Shared the Install for Audit - FULL","Verified","100%","30 Nov"],["APX","iDTC","Pending Cross Audit Review Comments Closure","Verified","100%","25 Sep"],["Canvas Technology","CTOO","Ready for LOB CTO Sign off","Verified","100%",""],["API Exchange","CTOO","Pending Audit Review Comments Closure","Verified","100%","18 Sep"],["Liquidity Management","Wholesale","Pending Audit Review Comments Closure","","30%",""],["ARX","CTOO","Yet to Share the Install for Audit","","",""],["eMACH Sigma","CTOO","Ready for LOB CTO Sign off","Verified","",""],["ARX","CTOO","Yet to Share the Install for Audit","","",""]];
+var PRE=[["eMACH.ai Collect - eMach SAAS - eMach Env","Consumer Banking","wait"],["eMACH.ai Collect - Presales - Demo 12 Env (K1 + IMEA)","Consumer Banking","wait"],["eMACH.ai Collect - Presales - Demo 2 Env (K1 + IMEA)","Consumer Banking","wait"],["eMACH.ai Collect - Presales - Demo 23 Env (K1 + IMEA)","Consumer Banking","wait"],["eMACH.ai Core Banking - OFP - Region 1 - Europe (Germany POC)","Consumer Banking","yet"],["eMACH.ai Core Banking - OFP - Region 2 - MEA POC","Consumer Banking","yet"],["eMACH.ai Core Banking - OFP - Region 3 - Islamic POC","Consumer Banking","yet"],["eMACH.ai Core Banking - OFP - Region 4 - Thailand Demo","Consumer Banking","yet"],["eMACH.ai DEP - BO","Consumer Banking","yet"],["eMACH.ai Lending - APAC + India + Srilanka","Consumer Banking","wait"],["eMACH.ai Lending - Canada & US","Consumer Banking","wait"],["eMACH.ai Lending - Europe & UK (EU Model Bank)","Consumer Banking","wait"],["eMACH.ai Lending - Middle East & Africa","Consumer Banking","wait"],["eMACH.ai Origination - Canada SAAS","Consumer Banking","wait"],["eMACH.ai Origination - Europe & UK (EU Model Bank)","Consumer Banking","shared"],["eMACH.ai Origination - Presales - India","Consumer Banking","wait"],["eMACH.ai Origination - Presales- APAC","Consumer Banking","wait"],["eMACH.ai Origination - Presales- MENA","Consumer Banking","wait"],["eMACH.ai Origination - Presales- US","Consumer Banking","wait"],["eMACH.ai Quantum Central Banking - presales repo","Consumer Banking","yet"],["APX","iDTC","wait"],["CPX","iDTC","wait"],["GPX","iDTC","wait"],["CBX BO - 22","Wholesale Banking","yet"],["CBX BO - 23","Wholesale Banking","yet"],["CBX BO - 24","Wholesale Banking","yet"],["CBX BO ANB","Wholesale Banking","yet"],["CBX-BO - BDO","Wholesale Banking","yet"],["CIM - 22","Wholesale Banking","yet"],["CIM - 23","Wholesale Banking","yet"],["CIM - 24","Wholesale Banking","yet"],["CLMS - 22","Wholesale Banking","yet"],["CLMS - 24","Wholesale Banking","yet"],["CNR - BDO","Wholesale Banking","yet"],["CNR ANB","Wholesale Banking","yet"],["CS - 22","Wholesale Banking","yet"],["CS - 23","Wholesale Banking","yet"],["CS - 24","Wholesale Banking","yet"],["CS - 25.2","Wholesale Banking","yet"],["eMACH.ai CIM 25.2 (ICICI Demo) CBX BO 25.2 (ICICI Demo)","Wholesale Banking","yet"],["eMACH.ai DTB - 26.1.1 -Payments Enabler -CBX Back Offfice -UOB","Wholesale Banking","wait"],["eMACH.ai Liquidity Management 25.x","Wholesale Banking","yet"],["eMACH.ai Payments","Wholesale Banking","wait"],["eMACH.ai Receivables & Collections -26.1.1 - CNR BO - VAM BO","Wholesale Banking","wait"],["IPSH - BDO","Wholesale Banking","yet"],["LMS - 22","Wholesale Banking","yet"],["LMS - 23","Wholesale Banking","yet"],["LMS - BDO","Wholesale Banking","yet"],["LMS 26.1","Wholesale Banking","wait"],["LMS ANB","Wholesale Banking","yet"],["PPP - 25.3","Wholesale Banking","yet"],["PPP ANB","Wholesale Banking","yet"],["SCF - 22","Wholesale Banking","yet"],["SCF - 24","Wholesale Banking","yet"],["SCF CBX 22","Wholesale Banking","yet"],["Trade - 22","Wholesale Banking","yet"],["Trade CBX 22","Wholesale Banking","yet"],["VAM - 25.3","Wholesale Banking","yet"],["VAM - BDO","Wholesale Banking","yet"],["VAM ANB","Wholesale Banking","yet"]];
+var PSTAT={
+ 'Ready for LOB CTO Sign off':['ready','Ready for CTO sign-off'],
+ 'Ready for Cross Audit':['adopt','Ready for cross audit'],
+ 'Pending Cross Audit Review Comments Closure':['adopt','Cross-audit comments closure'],
+ 'Pending Audit Review Comments Closure':['adopt','Audit comments closure'],
+ 'UI Audit in Progress':['open','UI audit in progress'],
+ 'Shared the Install for Audit':['open','Install shared, audit not started'],
+ 'Shared the Install for Audit - FULL':['open','Install shared, audit not started'],
+ 'Yet to Share the Install for Audit':['open','Install not shared']
+};
+var PROD=RAW.map(function(r,i){var s=PSTAT[r[2]];return {i:i,name:r[0],lob:r[1],lv:s[0],st:s[1],qa:r[3]||'Not recorded',cov:r[4]||'-',eta:r[5]||'-'}});
+var PMAP={shared:['ready','Install shared (full)'],wait:['adopt','Waiting for product audit to close'],yet:['open','Yet to share install']};
+var PRES=PRE.map(function(r,i){var m=PMAP[r[2]];return {i:i,name:r[0].replace(/^eMACH\.ai /,''),lob:r[1],lv:m[0],st:m[1]}});
+
+/* ---------- generic board ---------- */
+var LORD={ready:0,adopt:1,open:2};
+function makeBoard(cfg){
+  var S={lob:'',stage:'all',extra:'',q:'',sort:'',dir:1};
+  var root=$(cfg.mount);
+  root.innerHTML=
+   '<p class="headline" id="'+cfg.id+'-head"></p><div class="stages" id="'+cfg.id+'-stages" role="group" aria-label="Filter by stage"></div>'+
+   '<section class="card" style="margin-top:16px"><div class="card-head"><h2>By LOB</h2><span class="small">Dot colour shows the stage. Click the eye under a business to update the cards and table for it.</span></div><div class="lobs" id="'+cfg.id+'-lobs"></div><div class="legend" id="'+cfg.id+'-legend"></div></section>'+
+   '<section class="card" style="margin-top:16px"><div class="card-head"><h2>'+cfg.tableTitle+'</h2><span class="count" id="'+cfg.id+'-count"></span></div>'+
+   '<div class="bar"><div class="ctl grow"><label for="'+cfg.id+'-lobsel">Business (LOB)</label><div class="field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h6"/></svg><select id="'+cfg.id+'-lobsel"></select><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></div></div>'+
+   (cfg.extra?'<div class="ctl"><label for="'+cfg.id+'-extra">'+cfg.extra.label+'</label><select id="'+cfg.id+'-extra"></select></div>':'')+
+   '<div class="ctl grow2"><label for="'+cfg.id+'-q">Search</label><div class="field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="'+cfg.id+'-q" type="search" placeholder="'+cfg.placeholder+'" autocomplete="off"></div></div></div>'+
+   '<div class="sf" id="'+cfg.id+'-sf" role="group" aria-label="Filter by stage"></div>'+
+   '<div class="chipline" id="'+cfg.id+'-tags"></div><div class="scroll"><table id="'+cfg.id+'-table"></table></div></section>';
+  var rows=cfg.rows;
+  function opts(sel,list,all){$(sel).innerHTML='<option value="">'+all+'</option>'+list.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>'}).join('')}
+  opts(cfg.id+'-lobsel',cfg.lobs.map(function(l){return [l,lobName(l)]}),'All businesses');
+  if(cfg.extra)opts(cfg.id+'-extra',cfg.extra.options,'All');
+  function match(r,skipStage){return (!S.lob||r.lob===S.lob)&&(!cfg.extra||!S.extra||cfg.extra.get(r)===S.extra)&&(!S.q||r.name.toLowerCase().indexOf(S.q)>-1)&&(skipStage||S.stage==='all'||r.lv===S.stage)}
+  function counts(rs){var c={ready:0,adopt:0,open:0};rs.forEach(function(r){c[r.lv]++});return c}
+  function renderStages(){
+    var base=rows.filter(function(r){return match(r,true)}),c=counts(base),t=base.length||1;
+    var list=cfg.stages.map(function(s){
+      var g=cfg.lobs.map(function(l){var m=base.filter(function(r){return r.lv===s.k&&r.lob===l});if(!m.length)return '';
+        return '<span class="grp"><span class="gh">'+esc(lobName(l))+' <em>'+m.length+'</em></span>'+(cfg.cardNames?'<span class="chips">'+m.map(function(r){return '<span class="chip">'+esc(r.name)+'</span>'}).join('')+'</span>':'')+'</span>'}).join('');
+      return {k:s.k,cls:s.k,lab:s.label,n:c[s.k],cap:s.cap,grp:g}});
+    var hb=rows.filter(function(r){return !S.lob||r.lob===S.lob});$(cfg.id+'-head').innerHTML=(S.lob?'<b>'+esc(lobName(S.lob))+'</b> \u2013 ':'')+cfg.headline(counts(hb),hb.length);
+    $(cfg.id+'-stages').innerHTML=list.map(function(x){
+      var ic={all:'\u2263',ready:'\u2713',adopt:'\u21BB',open:'!'}[x.k];
+      return '<button type="button" class="stage '+x.cls+'" data-stage="'+x.k+'" aria-pressed="'+(S.stage===x.k)+'"><span class="top"><span class="ico" aria-hidden="true">'+ic+'</span><span class="lab">'+esc(x.lab)+'</span></span><span class="num">'+x.n+'<small>'+(x.n===1?'item':'items')+'</small></span><span class="cap">'+esc(x.cap)+'</span>'+x.grp+'<span class="sel">'+(S.stage===x.k?'Showing these below \u00B7 click again to clear':'Click to filter the table below')+'</span></button>'}).join('');
+  }
+  function renderLobs(){
+    var base=rows.filter(function(r){return (!cfg.extra||!S.extra||cfg.extra.get(r)===S.extra)&&(!S.q||r.name.toLowerCase().indexOf(S.q)>-1)});
+    $(cfg.id+'-lobs').innerHTML=cfg.lobs.map(function(l){
+      var rs=base.filter(function(r){return r.lob===l}),c=counts(rs);
+      var segs=['ready','adopt','open'].filter(function(k){return c[k]>0}).map(function(k){return '<button type="button" class="seg '+k+'" data-lob="'+esc(l)+'" data-stage="'+k+'" style="flex:'+c[k]+' 1 0" title="'+esc(lobName(l))+': '+c[k]+' '+esc(cfg.stageShort[k])+'" aria-label="'+esc(lobName(l))+', '+esc(cfg.stageShort[k])+', '+c[k]+'">'+c[k]+'</button>'}).join('');
+      return '<div class="lobrow'+(S.lob===l?' on':'')+'"><div class="lobl"><span class="lobname">'+esc(lobName(l))+'</span><button type="button" class="eye" data-lobname="'+esc(l)+'" aria-pressed="'+(S.lob===l)+'" title="'+(S.lob===l?'Showing':'View')+' '+esc(lobName(l))+' in the table" aria-label="View '+esc(lobName(l))+' in the table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>'+(S.lob===l?'Viewing':'View')+'</button></div><div class="lobbar">'+(segs||'<span class="small" style="padding:6px 10px">No items match</span>')+'</div><span class="lobtotal">'+rs.length+'</span>'+(cfg.cardNames?'<div class="lobchips">'+rs.slice().sort(function(a,b){return LORD[a.lv]-LORD[b.lv]}).map(function(r){return '<span class="pc '+r.lv+'">'+esc(r.name)+'</span>'}).join('')+'</div>':'')+'</div>'}).join('');
+    $(cfg.id+'-legend').innerHTML=cfg.stages.map(function(s){return '<span><i style="background:var(--'+s.k+')"></i>'+esc(s.label)+'</span>'}).join('');
+  }
+  function sortVal(r,c){var v=c.sort?c.sort(r):r[c.k];return typeof v==='string'?v.toLowerCase():v}
+  function renderTable(){
+    var rs=rows.filter(function(r){return match(r)});
+    if(S.sort){var col=cfg.cols.filter(function(c){return c.k===S.sort})[0];rs=rs.slice().sort(function(a,b){var x=sortVal(a,col),y=sortVal(b,col);return (x<y?-1:x>y?1:a.i-b.i)*S.dir})}
+    $(cfg.id+'-count').textContent='Showing '+rs.length+' of '+rows.length;
+    var h='<thead><tr>'+cfg.cols.map(function(c){var d=S.sort===c.k?(S.dir>0?'asc':'desc'):'';return '<th class="'+(c.cls||'')+'" scope="col" aria-sort="'+(d==='asc'?'ascending':d==='desc'?'descending':'none')+'"><button type="button" class="sortbtn" data-sort="'+c.k+'"'+(d?' data-dir="'+d+'"':'')+'>'+c.label+'<span class="ar" aria-hidden="true">'+(d==='desc'?'▼':d==='asc'?'▲':'↕')+'</span></button></th>'}).join('')+'</tr></thead><tbody>';
+    if(!rs.length)h+='<tr><td colspan="'+cfg.cols.length+'" class="empty">Nothing matches these filters. <button type="button" class="btn ghost" data-clear="1" style="margin-left:8px">Clear filters</button></td></tr>';
+    rs.forEach(function(r){h+='<tr>'+cfg.cols.map(function(c){return '<td class="'+(c.cls||'')+'">'+c.render(r)+'</td>'}).join('')+'</tr>'});
+    $(cfg.id+'-table').innerHTML=h+'</tbody>';
+  }
+  function renderTags(){
+    var t=[];
+    if(S.stage!=='all')t.push(['stage','Stage: '+cfg.stageShort[S.stage]]);
+    if(S.lob)t.push(['lob','LOB: '+lobName(S.lob)]);
+    if(cfg.extra&&S.extra)t.push(['extra',cfg.extra.label+': '+S.extra]);
+    if(S.q)t.push(['q','Search: '+S.q]);
+    $(cfg.id+'-tags').innerHTML=t.length?t.map(function(x){return '<span class="tag">'+esc(x[1])+'<button type="button" data-untag="'+x[0]+'" aria-label="Remove filter '+esc(x[1])+'">×</button></span>'}).join('')+'<button type="button" class="btn ghost" data-clear="1">Clear all</button>':'<span class="small">No filters applied. Showing everything.</span>';
+  }
+  function renderSf(){
+    var base=rows.filter(function(r){return match(r,true)}),c=counts(base);
+    var items=[['all','All',base.length]].concat(cfg.stages.map(function(s){return [s.k,cfg.stageShort[s.k],c[s.k]]}));
+    $(cfg.id+'-sf').innerHTML=items.map(function(x){return '<button type="button" class="sfb '+(x[0]==='all'?'':x[0])+'" data-sf="'+x[0]+'" aria-pressed="'+(S.stage===x[0])+'">'+(x[0]==='all'?'':'<i></i>')+esc(x[1])+' <b>'+x[2]+'</b></button>'}).join('');
+  }
+  function render(){renderSf();renderStages();renderLobs();renderTable();renderTags();$(cfg.id+'-lobsel').value=S.lob;if(cfg.extra)$(cfg.id+'-extra').value=S.extra}
+  function clearAll(){S.lob='';S.stage='all';S.extra='';S.q='';$(cfg.id+'-q').value='';render()}
+  $(cfg.id+'-sf').onclick=function(e){var b=e.target.closest('[data-sf]');if(b){S.stage=b.getAttribute('data-sf');render()}};
+  $(cfg.id+'-stages').onclick=function(e){var b=e.target.closest('[data-stage]');if(b){S.stage=S.stage===b.getAttribute('data-stage')?'all':b.getAttribute('data-stage');render()}};
+  $(cfg.id+'-lobs').onclick=function(e){
+    var sg=e.target.closest('.seg');
+    if(sg){var l=sg.getAttribute('data-lob'),k=sg.getAttribute('data-stage');if(S.lob===l&&S.stage===k){S.lob='';S.stage='all'}else{S.lob=l;S.stage=k}render();return}
+    var n=e.target.closest('[data-lobname]');if(n){var x=n.getAttribute('data-lobname'),y0=n.getBoundingClientRect().top;S.lob=S.lob===x?'':x;render();var nb=$(cfg.id+'-lobs').querySelector('[data-lobname="'+x+'"]');if(nb)window.scrollBy(0,nb.getBoundingClientRect().top-y0);}
+  };
+  $(cfg.id+'-lobsel').onchange=function(){S.lob=this.value;render()};
+  if(cfg.extra)$(cfg.id+'-extra').onchange=function(){S.extra=this.value;render()};
+  $(cfg.id+'-q').oninput=function(){S.q=this.value.trim().toLowerCase();render()};
+  root.addEventListener('click',function(e){
+    if(e.target.closest('[data-clear]')){clearAll();return}
+    var u=e.target.closest('[data-untag]');
+    if(u){var k=u.getAttribute('data-untag');if(k==='stage')S.stage='all';if(k==='lob')S.lob='';if(k==='extra')S.extra='';if(k==='q'){S.q='';$(cfg.id+'-q').value=''}render();return}
+    var s=e.target.closest('[data-sort]');
+    if(s){var k2=s.getAttribute('data-sort');if(S.sort===k2){if(S.dir===1)S.dir=-1;else{S.sort='';S.dir=1}}else{S.sort=k2;S.dir=1}renderTable()}
+  });
+  render();
+  return {reset:clearAll,rows:rows,counts:counts};
+}
+
+var pill=function(r){return '<span class="pill '+r.lv+'">'+esc(r.short||r.st)+'</span>'};
+var STAGE_SHORT={ready:'Ready for sign-off',adopt:'Fixes in progress',open:'Not completed'};
+var prodBoard=makeBoard({
+  id:'pr',mount:'panel-products',rows:PROD,lobs:['Consumer','Wholesale','CTOO','iDTC','iAI','iPF','iSA'],
+  tableTitle:'Product lines',cardNames:true,placeholder:'e.g. Cards, ARX',
+  stageShort:STAGE_SHORT,
+  headline:function(c,n){return '<b>'+c.ready+' of '+n+'</b> product lines are ready for CTO sign-off. '+c.adopt+' more have finished the audit and are fixing comments, and '+c.open+' are not completed.'},
+  stages:[
+   {k:'ready',label:'Ready for sign-off',cap:'Audit is clean. The LOB CTO can sign off.'},
+   {k:'adopt',label:'Audit done, fixes in progress',cap:'Audit report issued. Teams are closing the comments.'},
+   {k:'open',label:'Not completed',cap:'Install not shared or audit still running.'}],
+  cols:[
+   {k:'name',label:'Product',render:function(r){return esc(r.name)}},
+   {k:'lob',label:'LOB',render:function(r){return esc(lobName(r.lob))}},
+   {k:'lv',label:'Stage',sort:function(r){return LORD[r.lv]},render:function(r){return '<span class="pill '+r.lv+'">'+esc(STAGE_SHORT[r.lv])+'</span>'}},
+   {k:'st',label:'Where it stands',render:function(r){return esc(r.st)}},
+   {k:'eta',label:'ETA',cls:'n',sort:function(r){return r.eta==='-'?'~':r.eta},render:function(r){return esc(r.eta)}}
+  ]
+});
+var preBoard=makeBoard({
+  id:'ps',mount:'panel-presales',rows:PRES,lobs:['Consumer Banking','Wholesale Banking','iDTC'],
+  tableTitle:'Presales environments',placeholder:'e.g. Lending, CIM, APAC',
+  headline:function(c,n){return '<b>'+c.ready+' of '+n+'</b> presales environments have the install shared. '+c.adopt+' are waiting for their product audit to close, and '+c.open+' have not shared yet.'},
+  stageShort:{ready:'Install shared',adopt:'Waiting for product audit',open:'Yet to share'},
+  stages:[
+   {k:'ready',label:'Install shared',cap:'Environment shared for the UI audit.'},
+   {k:'adopt',label:'Waiting for product audit',cap:'Follows the product audit.'},
+   {k:'open',label:'Yet to share',cap:'No install shared yet.'}],
+  cols:[
+   {k:'name',label:'Environment',render:function(r){return esc(r.name)}},
+   {k:'lob',label:'LOB',render:function(r){return esc(r.lob)}},
+   {k:'lv',label:'Status',sort:function(r){return LORD[r.lv]},render:function(r){return '<span class="pill '+r.lv+'">'+esc(r.st)+'</span>'}}
+  ]
+});
+
+/* ---------- main tabs ---------- */
+var TABS=[['products','Products',PROD.length],['presales','Presales UI report',PRES.length],['guide','How to read',null]];
+var TAB='products';
+try{var sv=localStorage.getItem('audit-main');if(sv&&TABS.some(function(t){return t[0]===sv}))TAB=sv}catch(e){}
+function renderTabs(){
+  $('maintabs').innerHTML=TABS.map(function(t){return '<button type="button" role="tab" class="mtab" data-tab="'+t[0]+'" aria-selected="'+(TAB===t[0])+'" aria-controls="panel-'+t[0]+'"><span>'+t[1]+'</span>'+(t[2]!==null?'<span class="ct">'+t[2]+'</span>':'')+'</button>'}).join('');
+  TABS.forEach(function(t){$('panel-'+t[0]).hidden=TAB!==t[0]});
+}
+$('maintabs').onclick=function(e){var b=e.target.closest('[data-tab]');if(!b)return;TAB=b.getAttribute('data-tab');try{localStorage.setItem('audit-main',TAB)}catch(x){}renderTabs();window.scrollTo({top:0})};
+renderTabs();
+
+/* ---------- copy summary ---------- */
+$('copy').onclick=function(){
+  var c=prodBoard.counts(PROD),p=preBoard.counts(PRES);
+  var lines=['Symphony One Experience Audit, status as of 30 Sep 2026','Products ('+PROD.length+' lines): '+c.ready+' ready for CTO sign-off, '+c.adopt+' audit done and adoption in progress, '+c.open+' not completed.',''];
+  ['Consumer','Wholesale','CTOO','iDTC','iAI','iPF','iSA'].forEach(function(l){var x=prodBoard.counts(PROD.filter(function(r){return r.lob===l}));lines.push(lobName(l)+': '+(x.ready+x.adopt+x.open)+' lines, '+x.ready+' sign-off ready, '+x.adopt+' audit done, '+x.open+' not completed')});
+  lines.push('','Presales UI report ('+PRES.length+' environments): '+p.ready+' install shared, '+p.adopt+' waiting for product audit, '+p.open+' yet to share');
+  var txt=lines.join('\n'),out=$('copyout');
+  function fb(){out.textContent=txt;out.style.display='block';out.focus();toast('Select the text to copy')}
+  try{navigator.clipboard.writeText(txt).then(function(){out.style.display='none';toast('Summary copied')},fb)}catch(err){fb()}
+};
+</script>
+</body></html>
